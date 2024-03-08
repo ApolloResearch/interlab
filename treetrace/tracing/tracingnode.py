@@ -80,6 +80,7 @@ class TracingNode:
         meta: Optional[Dict[str, Data]] = None,
         tags: Optional[Sequence[str | Tag]] = None,
         storage: Optional["StorageBase"] = None,
+        uid: Optional[str] = None,
         directory=False,
         result=None,
     ):
@@ -120,7 +121,7 @@ class TracingNode:
         self.state: TracingNodeState = (
             TracingNodeState.NEW if result is None else TracingNodeState.FINISHED
         )
-        self.uid = generate_uid(name)
+        self.uid = uid if uid else generate_uid(name)
         self.children: List[TracingNode] = []
         self.tags: List[Tag] = tags
         self.start_time = None
