@@ -388,6 +388,16 @@ class TracingNode:
         html = create_node_static_html(self)
         display(HTML(html))
 
+    def __str__(self):
+        # Show name and children
+        children_strs = []
+        if self.children:
+            for child in self.children:
+                children_strs.append(str(child))
+            return f"TN({self.name}, chilren=[{','.join(children_strs)}])"
+        else:
+            return f"TN({self.name})"
+
 
 def with_trace(
     fn: Callable = None, *, name=None, kind=None, tags: Optional[List[str | Tag]] = None
