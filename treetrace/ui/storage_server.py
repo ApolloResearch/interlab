@@ -57,5 +57,5 @@ def _storage_app(storage) -> FastAPI:
 def start_storage_server(*, storage: StorageBase, port: int = 0) -> ServerHandle:
     handle = ServerHandle()
     handle.start(_storage_app(storage), port=port)
-    _LOG.info(f"Started tracing UI server: {handle}")
+    _LOG.info(f"Started tracing UI server: {handle.url}")
     return handle
