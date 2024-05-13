@@ -136,8 +136,10 @@ export function DataBrowser(props: { addInfo: AddInfo }) {
 
     const sortedKinds = Array.from(kinds);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { refresh() }, []);
+    useEffect(() => {
+        const interval = setInterval(refresh, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     return <div>
         <RootPanel showRoots={showRoots} setShowRoots={setShowRoots} roots={roots} selectedNode={selectedNode} refresh={refresh} selectRoot={selectRoot} addInfo={props.addInfo} />
