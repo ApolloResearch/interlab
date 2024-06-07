@@ -10,8 +10,8 @@ from typing import Callable, Iterator, List, Optional, Sequence
 
 from ..utils.display import display_iframe
 from ..utils.text import validate_uid
-from .tracingnode import TracingNode
 from .serialization import Data
+from .tracingnode import TracingNode
 
 _STORAGE_STACK = contextvars.ContextVar("_STORAGE_STACK", default=())
 
@@ -163,13 +163,17 @@ class FileStorage(StorageBase):
     def _write_node_file(self, directory: str, name: str, data: Data):
         path = self._file_path(directory, name)
         tmp_path = path + "._tmp"
-        try:
-            with gzip.open(tmp_path, "w") as f:
-                f.write(data)
-            os.rename(tmp_path, path)
-        finally:
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+        # The StorageBase already had a _lock member when I came to add this.
+        # I wasn't sure whether to introduce a new lock for this because I was worried about
+        # deadlocks. If threading issues arise then it might be worth trying that approach instead.
+        with self._lock:
+            try:
+                with gzip.open(tmp_path, "w") as f:
+                    f.write(data)
+                os.rename(tmp_path, path)
+            finally:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
 
     def read(self, uid: str) -> Data:
         if not validate_uid(uid):
