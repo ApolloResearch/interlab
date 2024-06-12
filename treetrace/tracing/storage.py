@@ -2,9 +2,11 @@ import abc
 import contextvars
 import gzip
 import json
+import math
 import os
 import shutil
 import threading
+from json import JSONEncoder
 from os import PathLike
 from typing import Callable, Iterator, List, Optional, Sequence
 
@@ -114,6 +116,21 @@ def current_storage() -> Optional[StorageBase]:
     return stack[-1]
 
 
+class NanConverter(JSONEncoder):
+    def encode(self, obj, *args, **kwargs):
+        return super().encode(self.nan2None(obj), *args, **kwargs)
+
+    @classmethod
+    def nan2None(cls, obj):
+        if isinstance(obj, dict):
+            return {k: cls.nan2None(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [cls.nan2None(v) for v in obj]
+        elif isinstance(obj, float) and math.isnan(obj):
+            return None
+        return obj
+
+
 class FileStorage(StorageBase):
     def __init__(self, directory: PathLike | str):
         super().__init__()
@@ -140,8 +157,10 @@ class FileStorage(StorageBase):
         if node.directory:
             self._write_node_dir(directory, node, root_node)
         else:
-            data = json.dumps(node.to_dict(root=root_node)).encode()
-            data_root = json.dumps(node.to_dict(False, root=root_node)).encode()
+            data = json.dumps(node.to_dict(root=root_node), cls=NanConverter).encode()
+            data_root = json.dumps(
+                node.to_dict(False, root=root_node), cls=NanConverter
+            ).encode()
             # Write full first, so when root exists, then full is definitely there
             self._write_node_file(directory, node.uid + ".full", data)
             self._write_node_file(directory, node.uid + ".root", data_root)
